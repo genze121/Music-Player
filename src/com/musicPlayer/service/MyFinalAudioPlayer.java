@@ -14,7 +14,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
  
 /*Author: Tirtha Sharma
  * Email: tirthagenze121@gmail.com
- * MobileNumber: 7001528120
+ * MobileNumber: 7349652691
  * Experience : 7 months
  * Technical Skills: JAVA, Hibernate, Spring
 */
@@ -26,6 +26,21 @@ public class MyFinalAudioPlayer {
     File ff= new File("D:/Downloads/Songs/WAV");
     String listOfSongs[]=ff.list();
     String vv[]= RandomizeStringArray(listOfSongs);
+    
+    private final static int NOTSTARTED = 0;
+    private final static int PLAYING = 1;
+    private final static int PAUSED = 2;
+    private final static int FINISHED = 3;
+
+    // the player actually doing all the work
+    private final Player player;
+
+    // locking object used to communicate with player thread
+    private final Object playerLock = new Object();
+
+    // status variable what player thread is doing/supposed to do
+    private int playerStatus = NOTSTARTED;
+	
   
     void play() {
     
@@ -69,26 +84,32 @@ public class MyFinalAudioPlayer {
     }
   }
    void stop(){
+	 synchronized (playerLock) {
+         playerStatus = FINISHED;
+         playerLock.notifyAll();
 	   
    }
-    
-   void playPrevious(){
 	   
-   }
-   void playNext(){
-	   
-   }
-    
-    
-    
-    
+    /**
+     * Resumes playback. Returns true if the new state is PLAYING.
+    */ 
+   public boolean resume() {
+        synchronized (playerLock) {
+            if (playerStatus == PAUSED) {
+                playerStatus = PLAYING;
+                playerLock.notifyAll();
+            }
+            return playerStatus == PLAYING;
+        }
+    }
+  
     
     public static void main(String[] args) {
     	MyFinalAudioPlayer player = new MyFinalAudioPlayer();
     	System.out.println("To start the music Player: Press 1.");
     	System.out.println("For Stopping the music Player: Press 2.");
-    	System.out.println("To play the previous music: Press 3.");
-    	System.out.println("To play the Next music: Press 4.");
+    	System.out.println("To resume the music: Press 3.");
+    	
     	
     	Scanner scan= new Scanner(System.in);
     	System.out.println("Please Enter your choice");
